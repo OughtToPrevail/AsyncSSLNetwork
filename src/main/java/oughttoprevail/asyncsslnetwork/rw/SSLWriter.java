@@ -48,14 +48,11 @@ public class SSLWriter implements Writer
 	 */
 	public void encryptThenWrite(Socket socket, ByteBuffer writeBuffer, Consumer<ByteBuffer> onWriteFinished)
 	{
-		System.out.println("Write " + socket.isClosed());
 		PooledByteBuffer encryptedByteBufferElement = ((SSLSocket) socket).getSSLSocketBase().encrypt(writeBuffer);
 		ByteBuffer encryptedByteBuffer = encryptedByteBufferElement.getByteBuffer();
 		encryptedByteBuffer.flip();
-		System.out.println("Write encrypted " + encryptedByteBuffer + " " + socket.getSocketChannel().isOpen());
 		writer.write(socket, encryptedByteBuffer, byteBuffer ->
 		{
-			System.out.println("Finished write");
 			encryptedByteBufferElement.close();
 			if(onWriteFinished != null)
 			{

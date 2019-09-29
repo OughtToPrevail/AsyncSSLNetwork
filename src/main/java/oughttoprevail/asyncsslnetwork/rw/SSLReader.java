@@ -51,29 +51,23 @@ public class SSLReader extends Reader
 	@Override
 	public void callRequests(Socket socket, ByteBuffer byteBuffer)
 	{
-		System.out.println("Call requests " + socket.isClosed() + " " + byteBuffer + " " + byteBuffer.hashCode());
 		//We shall wait if handshake has yet to begin or we are handshaking but not waiting for data
 		SSLSocketBase sslSocketBase = ((SSLSocket) socket).getSSLSocketBase();
 		if(!sslSocketBase.hasHandshakeBegun() || (sslSocketBase.isHandshaking() && !sslSocketBase.isWaitingForUnwrap()))
 		{
-			System.out.println("RETURN DUE TO HANDSHAKE");
 			return;
 		}
 		//need to decrypt byteBuffer
-		System.out.println("BYTEBUF " + byteBuffer);
 		byteBuffer.flip();
 		try
 		{
 			while(byteBuffer.hasRemaining())
 			{
-				System.out.println("Decrypt " + socket.isClosed());
 				PooledByteBuffer decryptedByteBuffer = sslSocketBase.decrypt(byteBuffer);
 				if(decryptedByteBuffer == null)
 				{
-					System.out.println("IGNORED " + byteBuffer);
 					return;
 				}
-				System.out.println("continue call requests " + socket.isClosed());
 				ByteBuffer decrypted = decryptedByteBuffer.getByteBuffer();
 				super.callRequests(socket, decrypted);
 				if(decrypted.position() == 0)
@@ -90,7 +84,6 @@ public class SSLReader extends Reader
 			}
 		} finally
 		{
-			System.out.println("CLEAR " + byteBuffer);
 			byteBuffer.clear();
 		}
 	}

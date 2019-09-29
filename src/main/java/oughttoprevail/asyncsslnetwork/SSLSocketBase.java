@@ -136,7 +136,6 @@ public class SSLSocketBase implements SSLSocket
 	 */
 	public PooledByteBuffer encrypt(ByteBuffer writeByteBuffer)
 	{
-		System.out.println("Encrypt");
 		return wrap(writeByteBuffer);
 	}
 	
@@ -150,23 +149,19 @@ public class SSLSocketBase implements SSLSocket
 	 */
 	public PooledByteBuffer decrypt(ByteBuffer newData)
 	{
-		System.out.println("DECRYPT " + (executor == null));
 		boolean handshakeUnwrap;
 		synchronized(waitingForUnwrap)
 		{
 			handshakeUnwrap = waitingForUnwrap.compareAndSet(true, false);
 		}
-		System.out.println("UNWRAP VALUE " + handshakeUnwrap + " " + isHandshakeComplete() + " " + isHandshaking() + " " + hasHandshakeBegun());
 		synchronized(readByteBufferLock)
 		{
 			initializeReadByteBuffer();
-			System.out.println("TEST " + readByteBuffer + " " + newData);
 			readByteBuffer.put(newData);
 			if(handshakeUnwrap)
 			{
 				if(!doHandshakeUnwrap())
 				{
-					System.out.println("RETURN NULL");
 					return null;
 				}
 				createHandshakeLoop();
@@ -180,7 +175,6 @@ public class SSLSocketBase implements SSLSocket
 						}
 					}
 				}
-				System.out.println("TRY CONTINUE");
 			}
 			return unwrap();
 		}
@@ -220,13 +214,11 @@ public class SSLSocketBase implements SSLSocket
 	 */
 	private boolean continueHandshake()
 	{
-		System.out.println("CONTINUE HANDSHAKE " + Thread.currentThread().getName() + " " + (executor == null));
 		HandshakeStatus status = sslEngine.getHandshakeStatus();
 		//check whether the handshake has completed
 		if(status == HandshakeStatus.FINISHED || status == HandshakeStatus.NOT_HANDSHAKING)
 		{
 			//if the handshake has already completed this is most likely a close finishing handshake
-			System.out.println("FINISHED " + handshakeCompleted);
 			waitingForUnwrap.set(false);
 			if(handshakeCompleted.compareAndSet(false, true))
 			{
@@ -237,7 +229,6 @@ public class SSLSocketBase implements SSLSocket
 			}
 			return false;
 		}
-		System.out.println("STATUS " + status);
 		//try to detect what the current handshake status is
 		switch(status)
 		{
@@ -251,12 +242,9 @@ public class SSLSocketBase implements SSLSocket
 			//if it is NEED_UNWRAP we need to receive information from the end client
 			case NEED_UNWRAP:
 			{
-				System.out.println("Waiting for read... " + readByteBuffer);
-				System.out.println("UNWRAP");
 				//try unwrap
 				if(doHandshakeUnwrap())
 				{
-					System.out.println("BREAK");
 					break;
 				}
 				//set waitingForUnwrap to be true so when we receive a read we shouldn't ignore it
@@ -304,7 +292,6 @@ public class SSLSocketBase implements SSLSocket
 		//are probably already closed
 		if(sslEngine.isOutboundDone() && sslEngine.isInboundDone())
 		{
-			System.out.println("FULL CLOSE " + disconnectionType);
 			//close socket, if disconnectionType is null which it usually is at this point it must mean we have received a close so it is a
 			// REMOTE_CLOSE
 			socket.manager().close(disconnectionType == null ? DisconnectionType.REMOTE_CLOSE : disconnectionType);
@@ -330,7 +317,6 @@ public class SSLSocketBase implements SSLSocket
 			//if any information is left we should be putting it at the start of readByteBuffer for next time
 			readByteBuffer.compact();
 		}*/
-		System.out.println("COMPACT " + decrypted);
 		return decrypted != null;
 	}
 	
@@ -417,11 +403,9 @@ public class SSLSocketBase implements SSLSocket
 			{
 				//take the values before the while loop so if they were changed last loop the byteBuffers will also be different
 				ByteBuffer dstByteBuffer = dst.getByteBuffer();
-				System.out.println("ENGINELOOP " + wrap + " " + src);
 				//get the engineResult by invoking sslEngine.wrap or sslEngine.unwrap depending on the specified wrap and put the srcByteBuffer and
 				// dstByteBuffer as the parameters
 				SSLEngineResult engineResult = wrap ? sslEngine.wrap(src, dstByteBuffer) : sslEngine.unwrap(src, dstByteBuffer);
-				System.out.println("ENGINE RESULT " + engineResult.getStatus());
 				//try to find the status
 				switch(engineResult.getStatus())
 				{
@@ -437,10 +421,7 @@ public class SSLSocketBase implements SSLSocket
 					{
 						//The SSLEngine was not able to process the operation because there are not enough bytes available in the destination buffer
 						// to hold the result.
-						System.out.println("DST BEFORE " + dstByteBuffer);
 						dst = expand(dstSize + dstByteBuffer.position(), dstByteBuffer, dst, false);
-						dstByteBuffer = dst.getByteBuffer();
-						System.out.println("DST AFTER " + dstByteBuffer);
 						break;
 					}
 					
@@ -459,17 +440,8 @@ public class SSLSocketBase implements SSLSocket
 						//The SSLEngine was not able to unwrap the incoming data because there were not enough source bytes available to make a
 						// complete packet.
 						int packetBufferSize = getPacketBufferSize();
-						System.out.println("PACKET " +
-										   packetBufferSize +
-										   " " +
-										   src.capacity() +
-										   " " +
-										   src.position() +
-										   " " +
-										   dstByteBuffer.position());
 						if(src.capacity() < packetBufferSize)
 						{
-							System.out.println("EXPAND " + packetBufferSize);
 							synchronized(readByteBufferLock)
 							{
 								//expand the src
@@ -489,7 +461,6 @@ public class SSLSocketBase implements SSLSocket
 					{
 						//The operation just closed this side of the SSLEngine, or the operation could not be completed because it was already
 						// closed.
-						System.out.println("PARAMS " + sslEngine.isInboundDone() + " " + sslEngine.isOutboundDone() + " " + wrap);
 						//set closed to true, this useful encase this is unwrap and it didn't go through "SSLSocketBaseImpl.closeSSL()"
 						synchronized(closed)
 						{
@@ -719,11 +690,9 @@ public class SSLSocketBase implements SSLSocket
 	 */
 	boolean closeSSL(DisconnectionType disconnectionType)
 	{
-		System.out.println("CLOSE SSL " + disconnectionType);
 		//if already closed then return true
 		if(hasInitiatedClose())
 		{
-			System.out.println("RETURN CLOSE");
 			return true;
 		}
 		//if it was closed by a remote close then we can't continue

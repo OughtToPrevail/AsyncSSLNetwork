@@ -62,7 +62,6 @@ public class SSLClientSocket extends ClientSocket implements SSLSocket
 	@Override
 	protected boolean preClose(DisconnectionType disconnectionType)
 	{
-		System.out.println("PRE CLOSE");
 		if(forceClosure)
 		{
 			return true;
