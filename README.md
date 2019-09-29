@@ -10,7 +10,11 @@ library with the additional feature of SSL sockets.
 
 ## Maven
 ```xml
-
+<dependency>
+  <groupId>com.github.oughttoprevail</groupId>
+  <artifactId>AsyncSSLNetwork</artifactId>
+  <version>1.0.1</version>
+</dependency>
 ```
 
 ## How to use
