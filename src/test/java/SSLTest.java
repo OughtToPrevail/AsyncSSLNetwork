@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import java.net.InetSocketAddress;
-
 import oughttoprevail.asyncnetwork.packet.ReadablePacketBuilder;
 import oughttoprevail.asyncnetwork.packet.WritablePacketBuilder;
 import oughttoprevail.asyncsslnetwork.SSLClientSocket;
@@ -30,7 +28,7 @@ public class SSLTest
 	private SSLTest() throws Exception
 	{
 		SSLClientSocket socket = new SSLClientSocket(SSLContextFactory.createContext("Client.jks", "Client Password".toCharArray()));
-		socket.connect(new InetSocketAddress("localhost", 6000));
+		socket.connectLocalHost(6000);
 		socket.onConnect(() ->
 		{
 			System.out.println("Established connection");
