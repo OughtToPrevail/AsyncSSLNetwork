@@ -89,6 +89,7 @@ public class SSLSocketBase implements SSLSocket
 	 * A {@link ByteBuffer} for reading operations (has encrypted input data)
 	 */
 	private ByteBuffer readByteBuffer;
+	private int socketBufferRead;
 	
 	public SSLSocketBase(Socket socket, SSLWriter writer, SSLContext sslContext, boolean client, ExecutorService executor)
 	{
@@ -139,15 +140,40 @@ public class SSLSocketBase implements SSLSocket
 		return wrap(writeByteBuffer);
 	}
 	
+	public void fillReadByteBuffer(ByteBuffer input)
+	{
+		synchronized(readByteBufferLock)
+		{
+			if(socketBufferRead >= input.position())
+			{
+				input.clear();
+				return;
+			}
+			initializeReadByteBuffer();
+			input.flip();
+			input.position(socketBufferRead);
+			socketBufferRead = 0;
+			input.limit(Math.min(readByteBuffer.capacity(), input.limit()));
+			readByteBuffer.put(input);
+			if(input.hasRemaining())
+			{
+				input.compact();
+			} else
+			{
+				input.clear();
+			}
+		}
+	}
+	
 	/**
-	 * Decrypts the specified readByteBuffer into a decrypted temporary {@link PooledByteBuffer} with
+	 * Decrypts the current readByteBuffer into a decrypted temporary {@link PooledByteBuffer} with
 	 * a {@link SSLEngine} unwrap operation.
 	 * Once finished with the returned the temporary {@link PooledByteBuffer} should be closed.
+	 * To input data use {@link #fillReadByteBuffer(ByteBuffer)}
 	 *
-	 * @param newData to decrypt
 	 * @return a decrypted temporary {@link PooledByteBuffer}
 	 */
-	public PooledByteBuffer decrypt(ByteBuffer newData)
+	public PooledByteBuffer decrypt()
 	{
 		boolean handshakeUnwrap;
 		synchronized(waitingForUnwrap)
@@ -156,8 +182,6 @@ public class SSLSocketBase implements SSLSocket
 		}
 		synchronized(readByteBufferLock)
 		{
-			initializeReadByteBuffer();
-			readByteBuffer.put(newData);
 			if(handshakeUnwrap)
 			{
 				if(!doHandshakeUnwrap())
@@ -357,6 +381,20 @@ public class SSLSocketBase implements SSLSocket
 	{
 		synchronized(readByteBufferLock)
 		{
+			ByteBuffer byteBuffer = socket.manager().getReadByteBuffer().getByteBuffer();
+			int limit = byteBuffer.limit();
+			if(socketBufferRead < limit)
+			{
+				int position = byteBuffer.position();
+				byteBuffer.position(socketBufferRead);
+				int written;
+				byteBuffer.limit(written = Math.min(position - socketBufferRead, readByteBuffer.capacity() - readByteBuffer.position()));
+				socketBufferRead+=written;
+				readByteBuffer.put(byteBuffer);
+				byteBuffer.limit(limit);
+				byteBuffer.position(position);
+			}
+			
 			readByteBuffer.flip();
 			PooledByteBuffer pooledByteBuffer = createSSLResultLoop(readByteBuffer, false);
 			if(readByteBuffer.position() > 0)

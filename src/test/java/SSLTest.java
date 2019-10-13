@@ -28,7 +28,6 @@ public class SSLTest
 	private SSLTest() throws Exception
 	{
 		SSLClientSocket socket = new SSLClientSocket(SSLContextFactory.createContext("Client.jks", "Client Password".toCharArray()));
-		socket.connectLocalHost(6000);
 		socket.onConnect(() ->
 		{
 			System.out.println("Established connection");
@@ -42,5 +41,6 @@ public class SSLTest
 			});
 			socket.beginHandshake();
 		});
+		socket.connectLocalHost(6000);
 	}
 }

@@ -18,6 +18,7 @@ package oughttoprevail.asyncsslnetwork;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.Executors;
 
 import oughttoprevail.asyncnetwork.server.ServerClientSocket;
 import oughttoprevail.asyncnetwork.util.DisconnectionType;
@@ -39,13 +40,14 @@ public class SSLServerClientSocket extends ServerClientSocket implements SSLSock
 	
 	public SSLServerClientSocket(SSLServerSocket server, SocketChannel socketChannel, int clientsIndex)
 	{
-		this(server, socketChannel, clientsIndex, new SSLWriter(server.manager().isWindowsImplementation() ? new WindowsWriter() : new ServerWriter()));
+		this(server, socketChannel, clientsIndex, new SSLWriter(server.manager().isWindowsImplementation() ? new WindowsWriter() : new ServerWriter()), new SSLReader());
 	}
 	
-	private SSLServerClientSocket(SSLServerSocket server, SocketChannel socketChannel, int clientsIndex, SSLWriter writer)
+	private SSLServerClientSocket(SSLServerSocket server, SocketChannel socketChannel, int clientsIndex, SSLWriter writer, SSLReader reader)
 	{
-		super(server, socketChannel, clientsIndex, new SSLReader(), writer);
-		sslSocketBase = new SSLSocketBase(this, writer, server.getSSLContext(), false, server.manager().getExecutorService());
+		super(server, socketChannel, clientsIndex, reader, writer);
+		sslSocketBase = new SSLSocketBase(this, writer, server.getSSLContext(), false, Executors.newFixedThreadPool((int) Math.ceil(server.getThreadsCount() / 5d), r -> new Thread(r, "SSL Tasks Thread")));
+		reader.init(sslSocketBase);
 		
 	}
 	

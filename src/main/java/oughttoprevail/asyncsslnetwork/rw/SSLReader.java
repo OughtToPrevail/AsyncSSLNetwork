@@ -19,7 +19,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import oughttoprevail.asyncnetwork.Socket;
 import oughttoprevail.asyncnetwork.pool.PooledByteBuffer;
 import oughttoprevail.asyncnetwork.util.Predicate;
 import oughttoprevail.asyncnetwork.util.reader.Reader;
@@ -35,41 +34,49 @@ public class SSLReader extends Reader
 	 * Queue of pending decrypted {@link ByteBuffer}
 	 */
 	private final Queue<ByteBuffer> pendingMessages;
+	private SSLSocketBase sslSocketBase;
 	
 	public SSLReader()
 	{
 		this.pendingMessages = new ArrayDeque<>();
 	}
 	
+	public void init(SSLSocketBase sslSocketBase)
+	{
+		this.sslSocketBase = sslSocketBase;
+	}
 	
 	/**
-	 * Decrypts data in the socket's read byte buffer and invokes {@link Reader#callRequests(Socket, ByteBuffer)} with a
+	 * Decrypts data in the socket's read byte buffer and invokes {@link Reader#callRequests(ByteBuffer)} with a
 	 * decrypted temporary {@link PooledByteBuffer}.
 	 *
 	 * @param byteBuffer which contains input data
 	 */
 	@Override
-	public void callRequests(Socket socket, ByteBuffer byteBuffer)
+	public void callRequests(ByteBuffer byteBuffer)
 	{
-		//We shall wait if handshake has yet to begin or we are handshaking but not waiting for data
-		SSLSocketBase sslSocketBase = ((SSLSocket) socket).getSSLSocketBase();
+		if(byteBuffer.position() == 0)
+		{
+			return;
+		}
+		//We wait if handshake has yet to begin or we are handshaking but not waiting for data
 		if(!sslSocketBase.hasHandshakeBegun() || (sslSocketBase.isHandshaking() && !sslSocketBase.isWaitingForUnwrap()))
 		{
 			return;
 		}
+		sslSocketBase.fillReadByteBuffer(byteBuffer);
 		//need to decrypt byteBuffer
-		byteBuffer.flip();
 		try
 		{
 			while(byteBuffer.hasRemaining())
 			{
-				PooledByteBuffer decryptedByteBuffer = sslSocketBase.decrypt(byteBuffer);
+				PooledByteBuffer decryptedByteBuffer = sslSocketBase.decrypt();
 				if(decryptedByteBuffer == null)
 				{
 					return;
 				}
 				ByteBuffer decrypted = decryptedByteBuffer.getByteBuffer();
-				super.callRequests(socket, decrypted);
+				super.callRequests(decrypted);
 				if(decrypted.position() == 0)
 				{
 					decryptedByteBuffer.close();

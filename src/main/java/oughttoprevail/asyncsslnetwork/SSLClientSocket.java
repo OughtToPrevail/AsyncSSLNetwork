@@ -49,6 +49,7 @@ public class SSLClientSocket extends ClientSocket implements SSLSocket
 	{
 		super(bufferSize, reader, writer);
 		sslSocketBase = new SSLSocketBase(this, writer, sslContext, true, null);
+		reader.init(sslSocketBase);
 	}
 	
 	/**
