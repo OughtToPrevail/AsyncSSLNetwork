@@ -13,7 +13,7 @@ library with the additional feature of SSL sockets.
 <dependency>
   <groupId>com.github.oughttoprevail</groupId>
   <artifactId>AsyncSSLNetwork</artifactId>
-  <version>1.0.3</version>
+  <version>1.0.4</version>
 </dependency>
 ```
 
