@@ -72,8 +72,7 @@ public class SSLServerClientSocket extends ServerClientSocket implements SSLSock
 		}
 		if(sslSocketBase.closeSSL(disconnectionType))
 		{
-			super.preClose(disconnectionType);
-			return true;
+			return super.preClose(disconnectionType);
 		}
 		return false;
 	}
