@@ -8,12 +8,12 @@ library with the additional feature of SSL sockets.
 * Uses Java's SSLEngine
 * Easy-to-use
 
-## Maven
+## Maven 
 ```xml
 <dependency>
   <groupId>com.github.oughttoprevail</groupId>
   <artifactId>AsyncSSLNetwork</artifactId>
-  <version>1.1.6</version>
+  <version>1.1.7</version>
 </dependency>
 ```
 
