@@ -30,7 +30,7 @@ socket.onConnect(() ->
 	{
 		System.out.println("Handshake successful");
 		WritablePacketBuilder.create().putString("Hello? are you there?").build().writeAndClose(socket);
-		ReadablePacketBuilder.create(true).aString().build().read(socket, readResult -> System.out.println((String) readResult.poll()));
+		ReadablePacketBuilder.create().aString().build().read(socket, readResult -> System.out.println((String) readResult.poll()));
 		socket.onDisconnect(disconnectionType -> System.out.println("Disconnected: " + disconnectionType));
 	});
 	socket.beginHandshake();
@@ -48,7 +48,7 @@ serverSocket.onSSLConnection(socket ->
 	socket.onHandshakeComplete(() ->
 	{
 		System.out.println("Handshake successful");
-		ReadablePacketBuilder.create(true).aString().build().read(socket, readResult -> System.out.println((String) readResult.poll()));
+		ReadablePacketBuilder.create().aString().build().read(socket, readResult -> System.out.println((String) readResult.poll()));
 		WritablePacketBuilder.create().putString("Hello there! How are you today?").build().writeAndClose(socket);
 		socket.onDisconnect(disconnectionType -> System.out.println("Disconnected: " + disconnectionType));
 	});

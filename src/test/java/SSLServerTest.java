@@ -16,8 +16,8 @@ limitations under the License.
 
 import javax.net.ssl.SSLEngine;
 
-import oughttoprevail.asyncnetwork.packet.ReadablePacketBuilder;
-import oughttoprevail.asyncnetwork.packet.WritablePacketBuilder;
+import oughttoprevail.asyncnetwork.packet.read.ReadablePacketBuilder;
+import oughttoprevail.asyncnetwork.packet.write.WritablePacketBuilder;
 import oughttoprevail.asyncsslnetwork.SSLServerSocket;
 
 public class SSLServerTest
@@ -39,7 +39,7 @@ public class SSLServerTest
 			socket.onHandshakeComplete(() ->
 			{
 				System.out.println("Handshake successful");
-				ReadablePacketBuilder.create(true).aString().build().read(socket, readResult -> System.out.println((String) readResult.poll()));
+				ReadablePacketBuilder.create().aString().build().read(socket, readResult -> System.out.println((String) readResult.poll()));
 				WritablePacketBuilder.create().putString("Hello there! How are you today?").build().writeAndClose(socket);
 				socket.onDisconnect(disconnectionType -> System.out.println("DISCONNECTIONTYPE " + disconnectionType));
 			});

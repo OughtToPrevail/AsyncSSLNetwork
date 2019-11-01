@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import oughttoprevail.asyncnetwork.packet.ReadablePacketBuilder;
-import oughttoprevail.asyncnetwork.packet.WritablePacketBuilder;
+import oughttoprevail.asyncnetwork.packet.read.ReadablePacketBuilder;
+import oughttoprevail.asyncnetwork.packet.write.WritablePacketBuilder;
 import oughttoprevail.asyncsslnetwork.SSLClientSocket;
 
 public class SSLTest
@@ -36,7 +36,7 @@ public class SSLTest
 			{
 				System.out.println("Handshake successful");
 				WritablePacketBuilder.create().putString("Hello? are you there?").build().writeAndClose(socket);
-				ReadablePacketBuilder.create(true).aString().build().read(socket, readResult -> System.out.println((String) readResult.poll()));
+				ReadablePacketBuilder.create().aString().build().read(socket, readResult -> System.out.println((String) readResult.poll()));
 				socket.onDisconnect(disconnectionType -> System.out.println("DISCONNECTIONTYPE " + disconnectionType));
 			});
 			socket.beginHandshake();
